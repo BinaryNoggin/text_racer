@@ -1,5 +1,10 @@
 defmodule TextRacer.Row do
+  @moduledoc """
+  Representation of one section of the roadway.
+  """
   defstruct [:left, :right, :obsticle, :max_width, :min_width, :side_char]
+
+  @type t :: %__MODULE__{}
 
   def new(min_width, max_width) do
     %__MODULE__{
@@ -12,6 +17,9 @@ defmodule TextRacer.Row do
     }
   end
 
+  @doc """
+  checks for collisions with obsticles or sides of the roadway at a given position
+  """
   def collides_at?(%{left: left, right: right, obsticle: obsticle}, position) do
     position <= left or position >= right or position == obsticle
   end
@@ -20,14 +28,17 @@ defmodule TextRacer.Row do
     right - left
   end
 
-  def update(%{left: left, right: right} = row, :left) do
+  @doc """
+  Returns a new row updated with the
+  """
+  def update(%__MODULE__{left: left, right: right} = row, :left) do
     cond do
       left == 0 -> update(row, :straight)
       true -> %{row | left: left - 1, obsticle: :none, right: right - 1}
     end
   end
 
-  def update(%{left: left, right: right} = row, :right) do
+  def update(%__MODULE__{left: left, right: right} = row, :right) do
     cond do
       right == 20 -> update(row, :straight)
       true -> %{row | left: left + 1, obsticle: :none, right: right + 1}
@@ -38,7 +49,7 @@ defmodule TextRacer.Row do
     %{row | obsticle: :none}
   end
 
-  def update(%{left: left, right: right} = row, :enlarge) do
+  def update(%__MODULE__{left: left, right: right} = row, :enlarge) do
     cond do
       right < 20 and left > 0 ->
         %{row | left: left - 1, right: right + 1, obsticle: :none}
@@ -48,7 +59,7 @@ defmodule TextRacer.Row do
     end
   end
 
-  def update(%{left: left, right: right, min_width: _min_width} = row, :shrink) do
+  def update(%__MODULE__{left: left, right: right, min_width: _min_width} = row, :shrink) do
     cond do
       right - left > 0 ->
         %{row | left: left + 1, right: right - 1, obsticle: :none}
@@ -58,7 +69,7 @@ defmodule TextRacer.Row do
     end
   end
 
-  def update(%{left: left, right: right} = row, :obsticle) do
+  def update(%__MODULE__{left: left, right: right} = row, :obsticle) do
     %{row | obsticle: left + Enum.random(1..(right - left - 1))}
   end
 
@@ -87,11 +98,20 @@ defmodule TextRacer.Row do
 end
 
 defmodule TextRacer.Game do
+  @moduledoc """
+  The data of a single game.
+
+  This module handles ticks and the user's input. There are a few
+  convience funcitons for getting ingormation out of the game.
+  """
+
   @height 8
   @display_height 8
   @max_width 21
   @min_width 5
   alias TextRacer.Row
+
+  @type t :: %__MODULE__{}
 
   defstruct position: 11,
             track:
@@ -128,22 +148,23 @@ defmodule TextRacer.Game do
   end
 
   def next_tick_options(%{obsticles: false}) do
-    [:straight, :right, :left, :shrink, :enlarge]
+    [:straight, :right, :left, :shrink]
   end
 
   def next_tick_options(_game) do
-    [:straight, :right, :left, :shrink, :enlarge, :obsticle]
+    [:straight, :right, :left, :shrink, :obsticle]
   end
 
-  def tick(%{status: :game_over} = game, _direction) do
+  @spec tick(TextRacer.Game.t(), any) :: map
+  def tick(%__MODULE__{status: :game_over} = game, _direction) do
     game
   end
 
-  def tick(%{wait: wait, speed: speed} = game, _) when wait > 0 or speed <= 0 do
+  def tick(%__MODULE__{wait: wait, speed: speed} = game, _) when wait > 0 or speed <= 0 do
     %{game | wait: wait - speed}
   end
 
-  def tick(game, direction) do
+  def tick(%__MODULE__{} = game, direction) do
     side =
       if game.warp do
         "|"
@@ -159,10 +180,6 @@ defmodule TextRacer.Game do
     |> add_top(next_top)
     |> check_collision()
     |> reset_wait()
-  end
-
-  def reset_wait(game) do
-    %{game | wait: 191}
   end
 
   def steer(%{status: :game_over} = game, _direction) do
@@ -273,5 +290,9 @@ defmodule TextRacer.Game do
 
   defp warp_bonus(%{warp: true, track: track}) do
     22 - Row.width(hd(track))
+  end
+
+  defp reset_wait(game) do
+    %{game | wait: 191}
   end
 end

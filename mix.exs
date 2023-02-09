@@ -46,7 +46,9 @@ defmodule TextRacer.MixProject do
       {:gettext, "~> 0.18"},
       {:jason, "~> 1.2"},
       {:plug_cowboy, "~> 2.5"},
-      {:nimble_options, "~> 0.5"}
+      {:nimble_options, "~> 0.5"},
+      {:recon, "~> 2.5.3"},
+      {:ex2ms, "~> 1.0"}
     ]
   end
 
@@ -57,6 +59,7 @@ defmodule TextRacer.MixProject do
   #
   # See the documentation for `Mix` for more info on aliases.
   defp aliases do
+
     [
       setup: ["deps.get"],
       "assets.deploy": ["esbuild default --minify", "phx.digest"]
