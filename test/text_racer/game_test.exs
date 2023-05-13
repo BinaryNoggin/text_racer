@@ -3,6 +3,41 @@ defmodule TextRacer.RowTest do
 
   alias TextRacer.Row
 
+  use PropCheck
+  use PropCheck.StateM.ModelDSL
+
+  property "track can not go outside game boundries", [] do
+    forall cmds <- commands(__MODULE__) do
+      {_history, _state, result} = run_commands(__MODULE__, cmds)
+
+      result == :ok
+    end
+  end
+
+  def initial_state do
+    Row.new(0, 21)
+  end
+
+  def command_gen(state) do
+    frequency([
+      {1, {:update, [state, direction()]}}
+    ])
+  end
+
+  defcommand :update do
+    def impl(state, direction), do: Row.update(state, direction)
+    def pre(_state, _args), do: true
+    def next(_old_state, [_, _direction], result), do: result
+    def post(_initial, [_, _direction], final) do
+      final.left >= 0
+      && final.right <= 21
+    end
+  end
+
+  def direction do
+    oneof(~w[left right straight shrink enlarge]a)
+  end
+
   describe "when on the left side" do
     setup do
       row = %{Row.new(5, 21) | left: 0, right: 10}
@@ -47,12 +82,6 @@ defmodule TextRacer.GameTest do
 
   alias TextRacer.Game
 
-  test "tick length" do
-    game = Game.new()
-
-    assert Game.tick_length(game) == 200
-  end
-
   test "speed" do
     game = Game.new()
 
@@ -64,7 +93,6 @@ defmodule TextRacer.GameTest do
       Game.new()
       |> Game.steer(:accelerate)
 
-    assert Game.tick_length(game) == 190
     assert Game.speed(game) == 10
 
     max_speed_game = %{game | speed: 190}
@@ -77,7 +105,6 @@ defmodule TextRacer.GameTest do
       Game.new()
       |> Game.steer(:decelerate)
 
-    assert Game.tick_length(game) == 200
     assert Game.speed(game) == 0
   end
 

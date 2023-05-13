@@ -122,7 +122,7 @@ defmodule TextRacer.Game do
             wait: 0,
             debug: false,
             score: 0,
-            obsticles: true,
+            obsticles: false,
             warp: false
 
   def new do

@@ -12,7 +12,10 @@ config :text_racer, TextRacerWeb.Endpoint,
   url: [host: "localhost"],
   render_errors: [view: TextRacerWeb.ErrorView, accepts: ~w(html json), layout: false],
   pubsub_server: TextRacer.PubSub,
-  live_view: [signing_salt: "I79806Ut"]
+  live_view: [signing_salt: "I79806Ut"],
+  watchers: [
+    tailwind: {Tailwind, :install_and_run, [:default, ~w(--watch)]}
+  ]
 
 # Configures the mailer
 #
@@ -43,6 +46,46 @@ config :logger, :console,
 
 # Use Jason for JSON parsing in Phoenix
 config :phoenix, :json_library, Jason
+
+config :tailwind, version: "3.2.4",
+default: [
+  args: ~w(
+    --config=tailwind.config.js
+    --input=css/app.css
+    --output=../priv/static/assets/app.css
+  ),
+  cd: Path.expand("../assets", __DIR__)
+]
+
+config :recon_demo,
+  names: [
+    "Alfa",
+    "Bravo",
+    "Charlie",
+    "Delta",
+    "Echo",
+    "Foxtrot",
+    "Golf",
+    "Hotel",
+    "India",
+    "Juliett",
+    "Kilo",
+    "Lima",
+    "Mike",
+    "November",
+    "Oscar",
+    "Papa",
+    "Quebec",
+    "Romeo",
+    "Sierra",
+    "Tango",
+    "Uniform",
+    "Victor",
+    "Whiskey",
+    "Xray",
+    "Yankee",
+    "Zulu"
+  ]
 
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.

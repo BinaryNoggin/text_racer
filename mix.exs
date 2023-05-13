@@ -20,7 +20,7 @@ defmodule TextRacer.MixProject do
   def application do
     [
       mod: {TextRacer.Application, []},
-      extra_applications: [:logger, :runtime_tools]
+      extra_applications: [:logger, :runtime_tools, :recon_demo]
     ]
   end
 
@@ -36,9 +36,9 @@ defmodule TextRacer.MixProject do
       {:phoenix, "~> 1.6.15"},
       {:phoenix_html, "~> 3.0"},
       {:phoenix_live_reload, "~> 1.2", only: :dev},
-      {:phoenix_live_view, "~> 0.17.5"},
+      {:phoenix_live_view, "~> 0.18.0"},
       {:floki, ">= 0.30.0", only: :test},
-      {:phoenix_live_dashboard, "~> 0.6"},
+      # {:phoenix_live_dashboard, "~> 0.6"},
       {:esbuild, "~> 0.4", runtime: Mix.env() == :dev},
       {:swoosh, "~> 1.3"},
       {:telemetry_metrics, "~> 0.6"},
@@ -47,8 +47,12 @@ defmodule TextRacer.MixProject do
       {:jason, "~> 1.2"},
       {:plug_cowboy, "~> 2.5"},
       {:nimble_options, "~> 0.5"},
-      {:recon, "~> 2.5.3"},
-      {:ex2ms, "~> 1.0"}
+      {:recon, "~> 2.5.3", override: true},
+      {:ex2ms, "~> 1.0"},
+      {:orion, "~> 1.0.1"},
+      {:tailwind, "~> 0.2.0", runtime: Mix.env() == :dev},
+      {:propcheck, "~> 1.4.1", only: [:dev, :test]},
+      {:recon_demo, "~> 0.1", path: "../recon_demo"}
     ]
   end
 
@@ -59,7 +63,6 @@ defmodule TextRacer.MixProject do
   #
   # See the documentation for `Mix` for more info on aliases.
   defp aliases do
-
     [
       setup: ["deps.get"],
       "assets.deploy": ["esbuild default --minify", "phx.digest"]
