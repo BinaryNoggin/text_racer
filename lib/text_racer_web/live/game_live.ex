@@ -1,6 +1,6 @@
 defmodule TextRacerWeb.GameLive do
   @moduledoc """
-  This is the live view for playing TextRacer
+  This is the LiveView for playing TextRacer
   """
   use TextRacerWeb, :live_view
 
@@ -22,9 +22,8 @@ defmodule TextRacerWeb.GameLive do
     <div class="bg-gray-200 p-4 rounded-lg">
       <div class="text-lg font-bold mb-2">Game Status</div>
       <div class="flex justify-between items-center mb-2">
-        <div>Score: <%= Game.score(@game) %></div>
         <div>Speed: <%= Game.speed(@game) %></div>
-        <div>Obstacles: <%= @game.obsticles %></div>
+        <div>Score: <%= Game.score(@game) %></div>
       </div>
       <div class="bg-gray-50 p-4 rounded-lg shadow-inner text-3xl max-w-m">
         <pre class="font-mono max-w-s text-3xl" phx-window-keydown="steer"><%= to_string(@game) %></pre>

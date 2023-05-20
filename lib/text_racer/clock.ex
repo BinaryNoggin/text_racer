@@ -28,10 +28,6 @@ defmodule TextRacer.Clock do
      |> schedule_tick()}
   end
 
-  def handle_info(_, state) do
-    {:noreply, state}
-  end
-
   defp schedule_tick(state) do
     %{state | timer: Process.send_after(self(), :tick, @tick_time)}
   end

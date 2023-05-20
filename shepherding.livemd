@@ -1,0 +1,226 @@
+# Shepherding of TextRacer
+
+```elixir
+require IEx.Helpers
+
+defmodule MyHelpers do
+  def separator do
+    IO.puts(String.duplicate("=", 72))
+  end
+end
+```
+
+## Connecting to TextRacer
+
+### Start the Server
+
+Set `sname` and `cookie` on the server to connect to our running application.
+
+This is how to do that locally.
+
+`iex --sname test --cookie mycookie -S mix phx.server`
+
+Now, we can start another terminal and connect it to the application with the same cookie.
+
+`iex --sname debug --cookie mycookie`
+
+## Getting Familiar
+
+```elixir
+{:ok, modules} = :application.get_key(:text_racer, :modules)
+
+modules |> Enum.join("\n") |> IO.puts()
+```
+
+## Exploring the modules that look relevant
+
+* Use the builtin help to get a sense of what is happening
+
+```elixir
+IEx.Helpers.h(TextRacer.Game)
+MyHelpers.separator()
+IEx.Helpers.h(TextRacer.Row)
+MyHelpers.separator()
+IEx.Helpers.h(TextRacerWeb.GameLive)
+MyHelpers.separator()
+```
+
+### What does the game data look like?
+
+* Use types to figure out data structures
+
+```elixir
+IEx.Helpers.t(TextRacer.Game)
+```
+
+### Position and track seem like they might matter.
+
+* individual types show typedocs too
+
+```elixir
+IEx.Helpers.t(TextRacer.Game.position())
+IEx.Helpers.t(TextRacer.Game.track())
+```
+
+## See I use these everywhere
+
+I use these everywhere. In this case I couldn't remember what the options were.
+
+I thought that `args: :arity` was `arity: :arity`, but when it wasn't wroking I decided to check.
+
+```elixir
+IEx.Helpers.t(ReconTrace)
+```
+
+## How does this thing work?
+
+Start digging into interesting modules and finding out how the pieces fit together.
+
+```elixir
+traces = [
+  {TextRacerWeb.GameLive, :_, :_},
+  {TextRacer.Game, :_, :_},
+  {TextRacer.Row, :_, :_}
+]
+
+ReconTrace.calls(traces, 100, args: :arity)
+```
+
+## What is that handle_info?
+
+```elixir
+traces = [
+  {TextRacerWeb.GameLive, :handle_info, :_}
+]
+
+ReconTrace.calls(traces, 100, args: :args)
+```
+
+## An Aside on Production Safety
+
+```elixir
+ReconTrace.calls({:_, :_, :_}, 10)
+```
+
+## Not a LiveView Problem
+
+```elixir
+traces = [
+  {TextRacer.Game, :_, :_},
+  {TextRacer.Row, :_, :_}
+]
+
+ReconTrace.calls(traces, 10, args: :arity)
+```
+
+## What do the arguments to these functions look like?
+
+```elixir
+traces = [
+  {TextRacer.Game, :_, :_},
+  {TextRacer.Row, :_, :_}
+]
+
+ReconTrace.calls(traces, 100, args: :args)
+```
+
+## We only see the issue when we are moving
+
+```elixir
+matcher = [
+  {
+    {%{speed: :"$1"}, :_},
+    [{:>, :"$1", 0}],
+    [:ok]
+  }
+]
+
+traces = [
+  {TextRacer.Game, :_, matcher},
+  {TextRacer.Row, :_, :_}
+]
+
+ReconTrace.calls(traces, 100, args: :args)
+```
+
+## Row looks like an interesting spot
+
+```elixir
+IEx.Helpers.t(TextRacer.Row)
+```
+
+```elixir
+IEx.Helpers.t(TextRacer.Row.column())
+```
+
+```elixir
+IEx.Helpers.t(TextRacer.Row.width())
+```
+
+```elixir
+IEx.Helpers.exports(TextRacer.Row)
+```
+
+```elixir
+traces = [
+  {TextRacer.Row, :set_side, :_},
+  {TextRacer.Row, :update, :_}
+]
+
+ReconTrace.calls(traces, 10, args: :args)
+```
+
+```elixir
+traces = [
+  {TextRacer.Row, :set_side, :return_trace},
+  {TextRacer.Row, :update, :return_trace}
+]
+
+ReconTrace.calls(traces, 10, args: :args)
+```
+
+```elixir
+ReconTrace.calls({TextRacer.Row, :update, :return_trace}, 10)
+```
+
+```elixir
+capture_fun = fn [
+                   %{
+                     left: left,
+                     right: right,
+                     min_width: min_width
+                   },
+                   _
+                 ]
+                 when right - left <= min_width ->
+  :return
+end
+
+ReconTrace.calls({TextRacer.Row, :update, capture_fun}, 10)
+```
+
+```elixir
+IEx.Helpers.h(TextRacer.Row.update())
+```
+
+## Shrink only
+
+```elixir
+capture_fun = fn [
+                   %{
+                     left: left,
+                     right: right,
+                     min_width: min_width
+                   },
+                   :shrink
+                 ]
+                 when right - left <= min_width ->
+  :return
+end
+
+ReconTrace.calls({TextRacer.Row, :update, capture_fun}, 2)
+```
+
+### Fixing the code
+
+https://github.com/BinaryNoggin/text_racer/tree/with_bug
